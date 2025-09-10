@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  ganache:
+    image: trufflesuite/ganache-cli:latest
+    ports:
+      - "7545:7545"
+    command: "ganache-cli -h 0.0.0.0"
+
+  backend:
+    build: ./backend
+    ports:
+      - "3001:3001"
+    depends_on:
+      - ganache
+    volumes:
+      - ./backend:/usr/src/app
+      - /usr/src/app/node_modules
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/usr/src/app
+      - /usr/src/app/node_modules

@@ -8,75 +8,43 @@ const HerbTrackerApp = () => {
   const [error, setError] = useState('');
   const [scanInput, setScanInput] = useState('');
 
-  // Mock API call
   const fetchBatchData = async (batchId) => {
     setLoading(true);
     setError('');
+    setBatchData(null);
     
     try {
-      // Simulating API call with mock data
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      const mockData = {
-        batch: {
-          batchId: batchId,
-          herbName: 'Ashwagandha',
-          herbVariety: 'Withania somnifera',
-          farmer: '0x742d35Cc6e64C5532E123B7B8B7A9E',
-          farmLocation: 'Rajasthan, India',
-          gpsCoordinates: '26.9124° N, 75.7873° E',
-          plantingDate: '2024-01-15',
-          harvestDate: '2024-06-20',
-          quantity: 1000,
-          soilCondition: 'Organic, pH 6.8',
-          isOrganic: true,
-          currentStage: 3,
-          isActive: true
-        },
-        processing: [{
-          processor: '0x892f45Cc6e64C5532E987B7B8B7B1A',
-          processDate: '2024-06-25',
-          processMethod: 'Traditional Sun Drying',
-          temperature: 35,
-          duration: 72,
-          qualityGrade: 'Premium A+',
-          certificationHash: 'QmX7Y9Z2...',
-          outputQuantity: 850
-        }],
-        distribution: [{
-          distributor: '0x123a45Cc6e64C5532E456B7B8B7C2D',
-          destination: '0x456b78Dd7e75D6643F789C8C9C8D3E',
-          shipDate: '2024-07-01',
-          expectedDelivery: '2024-07-05',
-          transportConditions: 'Temperature controlled, Humidity <60%',
-          temperatureControlled: true,
-          trackingId: 'TRK-ASH-2024-001'
-        }],
-        qualityTests: [{
-          tester: '0x789c12Ee8f86E7754G890D9D0D9E4F',
-          testDate: '2024-06-22',
-          testType: 'Heavy Metal Analysis',
-          passed: true,
-          testResults: 'QmA8B9C3...',
-          certificationId: 'AYUSH-QC-2024-567'
-        }, {
-          tester: '0x789c12Ee8f86E7754G890D9D0D9E4F',
-          testDate: '2024-06-23',
-          testType: 'Pesticide Residue Test',
-          passed: true,
-          testResults: 'QmD4E5F6...',
-          certificationId: 'AYUSH-PR-2024-568'
-        }],
-        iotData: [
-          { sensorType: 'Temperature', value: 22.5, unit: '°C', timestamp: '2024-07-03T10:30:00Z' },
-          { sensorType: 'Humidity', value: 45, unit: '%', timestamp: '2024-07-03T10:30:00Z' },
-          { sensorType: 'GPS', value: '26.9124,75.7873', unit: 'coordinates', timestamp: '2024-07-03T10:30:00Z' }
-        ]
-      };
-      
-      setBatchData(mockData);
+      const response = await fetch(`http://localhost:3001/api/batch/${batchId}`);
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const data = await response.json();
+
+      // Convert timestamps to dates
+      if (data.batch) {
+        data.batch.plantingDate = new Date(data.batch.plantingDate * 1000);
+        data.batch.harvestDate = new Date(data.batch.harvestDate * 1000);
+      }
+      if (data.processing) {
+        data.processing.forEach(p => p.processDate = new Date(p.processDate * 1000));
+      }
+      if (data.distribution) {
+        data.distribution.forEach(d => {
+            d.shipDate = new Date(d.shipDate * 1000);
+            d.expectedDelivery = new Date(d.expectedDelivery * 1000);
+        });
+      }
+      if(data.qualityTests){
+        data.qualityTests.forEach(t => t.testDate = new Date(t.testDate * 1000));
+      }
+      if(data.iotData){
+        data.iotData.forEach(i => i.timestamp = new Date(i.timestamp * 1000));
+      }
+
+      setBatchData(data);
+      setActiveTab('results');
     } catch (err) {
-      setError('Failed to fetch batch data. Please try again.');
+      setError('Failed to fetch batch data. Please check the Batch ID and try again.');
     } finally {
       setLoading(false);
     }
@@ -204,7 +172,7 @@ const HerbTrackerApp = () => {
       );
     }
 
-    const { batch, processing, distribution, qualityTests } = batchData;
+    const { batch, processing, distribution, qualityTests, iotData } = batchData;
     const stageInfo = getStageInfo(batch.currentStage);
 
     return (
@@ -264,7 +232,7 @@ const HerbTrackerApp = () => {
             </div>
             <div>
               <p className="text-sm text-gray-600">Harvested</p>
-              <p className="font-semibold flex items-center">
+              <p className="font-semibold flex.items-center">
                 <Calendar className="w-4 h-4 text-gray-400 mr-1" />
                 {formatDate(batch.harvestDate)}
               </p>
@@ -392,14 +360,14 @@ const HerbTrackerApp = () => {
         </div>
 
         {/* IoT Sensor Data */}
-        {batchData.iotData.length > 0 && (
+        {iotData.length > 0 && (
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
               <Thermometer className="w-5 h-5 text-indigo-600 mr-2" />
               Real-time Monitoring
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {batchData.iotData.map((data, index) => (
+              {iotData.map((data, index) => (
                 <div key={index} className="bg-gray-50 p-4 rounded-lg">
                   <p className="text-sm text-gray-600">{data.sensorType}</p>
                   <p className="text-2xl font-bold text-gray-800">
@@ -451,7 +419,9 @@ const HerbTrackerApp = () => {
             Scan
           </button>
           <button
-            onClick={() => setActiveTab('results')}
+            onClick={() => {
+                if(batchData) setActiveTab('results')
+            }}
             className={`flex-1 py-3 px-4 text-center font-medium ${
               activeTab === 'results'
                 ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
