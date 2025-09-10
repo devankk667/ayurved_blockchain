@@ -8,7 +8,8 @@ const port = 3001;
 app.use(cors());
 
 // --- Web3 Connection ---
-const web3 = new Web3('http://127.0.0.1:7545'); // Ganache default
+// Using the service name 'ganache' instead of localhost for Docker networking
+const web3 = new Web3('http://ganache:7545');
 const contractABI = require('../../contracts/build/contracts/AyurvedicHerbTracker.json').abi;
 // This address will be set after deployment
 const contractAddress = 'YOUR_CONTRACT_ADDRESS';
