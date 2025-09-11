@@ -1,6 +1,7 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
-const ProgressBar = ({ currentStage }) => {
+const ProgressBar = ({ currentStage = 0 }) => {
   const stages = ['Farm', 'Processing', 'Distribution', 'Retail', 'Consumer'];
   const progressPercentage = ((currentStage + 1) / stages.length) * 100;
 
@@ -38,6 +39,10 @@ const ProgressBar = ({ currentStage }) => {
       </div>
     </div>
   );
+};
+
+ProgressBar.propTypes = {
+  currentStage: PropTypes.number
 };
 
 export default ProgressBar;

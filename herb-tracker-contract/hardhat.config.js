@@ -3,7 +3,7 @@ require("@nomicfoundation/hardhat-toolbox");
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: {
-    version: "0.8.24",
+    version: "0.8.20",
     settings: {
       optimizer: {
         enabled: true,
@@ -11,21 +11,18 @@ module.exports = {
       }
     }
   },
-  defaultNetwork: "hardhat",
   networks: {
     hardhat: {
-      chainId: 31337,
-      mining: {
-        auto: true,
-        interval: 0
-      }
+      chainId: 1337
     },
     localhost: {
-      url: "http://127.0.0.1:8545",
-      chainId: 31337
+      url: "http://127.0.0.1:8545"
     }
   },
-  mocha: {
-    timeout: 40000
+  paths: {
+    sources: "./contracts",
+    tests: "./test",
+    cache: "./cache",
+    artifacts: "./artifacts"
   }
 };

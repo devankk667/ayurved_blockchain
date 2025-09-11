@@ -3,6 +3,7 @@ import { Routes, Route, useParams, useNavigate } from 'react-router-dom';
 import Header from './components/Header';
 import ScanTab from './components/ScanTab';
 import ResultsTab from './components/ResultsTab';
+import ErrorBoundary from './components/ErrorBoundary';
 import { Leaf, Package, Truck, ShieldCheck, CheckCircle } from 'lucide-react';
 import './index.css';
 
@@ -49,15 +50,22 @@ const Dashboard = () => {
       }
       const data = await response.json();
 
-      // Add frontend-specific display info to the data
-      data.stageInfo = getStageInfo(data.batch.currentStage);
+      // Ensure currentStage is a number
+      if (data.batch && typeof data.batch.currentStage === 'string') {
+        data.batch.currentStage = parseInt(data.batch.currentStage, 10) || 0;
+      }
+
+      // Only set stageInfo if not already set from backend
+      if (!data.stageInfo) {
+        data.stageInfo = getStageInfo(data.batch.currentStage);
+      }
 
       setBatchData(data);
       setActiveTab('results');
       if (!urlBatchId || urlBatchId.toLowerCase() !== batchId.toLowerCase()) {
         navigate(`/batch/${batchId}`, { replace: true });
       }
-    } catch (err) => {
+    } catch (err) {
       setError(err.message || 'Failed to fetch batch data.');
       if (urlBatchId) {
         navigate('/', { replace: true });
@@ -93,10 +101,12 @@ const Dashboard = () => {
 
 const App = () => {
   return (
-    <Routes>
-      <Route path="/" element={<Dashboard />} />
-      <Route path="/batch/:batchId" element={<Dashboard />} />
-    </Routes>
+    <ErrorBoundary>
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/batch/:batchId" element={<Dashboard />} />
+      </Routes>
+    </ErrorBoundary>
   );
 };
 

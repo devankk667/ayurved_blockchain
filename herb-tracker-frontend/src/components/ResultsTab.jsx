@@ -7,6 +7,14 @@ import DistributionDetails from './results/DistributionDetails';
 import QualityCertifications from './results/QualityCertifications';
 import RealTimeMonitoring from './results/RealTimeMonitoring';
 
+// Default stage info in case it's missing
+const defaultStageInfo = {
+  name: 'Unknown',
+  icon: '❓',
+  color: 'text-gray-600',
+  bg: 'bg-gray-100'
+};
+
 const ResultsTab = ({ batchData }) => {
   if (!batchData) {
     return (
@@ -20,7 +28,15 @@ const ResultsTab = ({ batchData }) => {
     );
   }
 
-  const { batch, processing, distribution, qualityTests, iotData, stageInfo } = batchData;
+  // Safely destructure with defaults
+  const { 
+    batch = {}, 
+    processing = [], 
+    distribution = [], 
+    qualityTests = [], 
+    iotData = [], 
+    stageInfo = defaultStageInfo 
+  } = batchData || {};
 
   return (
     <div className="p-6 space-y-6 bg-gray-50">
@@ -28,12 +44,16 @@ const ResultsTab = ({ batchData }) => {
       <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-2xl font-bold text-gray-800">{batch.herbName}</h2>
-            <p className="text-gray-600">{batch.herbVariety}</p>
-            <p className="text-sm text-gray-500">Batch ID: {batch.batchId}</p>
+            <h2 className="text-2xl font-bold text-gray-800">{batch.herbName || 'Unknown Herb'}</h2>
+            <p className="text-gray-600">{batch.herbVariety || 'Unknown Variety'}</p>
+            <p className="text-sm text-gray-500">Batch ID: {batch.batchId || 'N/A'}</p>
           </div>
           <div className={`p-3 rounded-full ${stageInfo.bg}`}>
-            <stageInfo.icon className={`w-8 h-8 ${stageigo.color}`} />
+            {typeof stageInfo.icon === 'string' ? (
+              <span className={`text-2xl ${stageInfo.color}`}>{stageInfo.icon}</span>
+            ) : (
+              <stageInfo.icon className={`w-8 h-8 ${stageInfo.color}`} />
+            )}
           </div>
         </div>
 
@@ -47,7 +67,7 @@ const ResultsTab = ({ batchData }) => {
           )}
         </div>
 
-        <ProgressBar currentStage={batch.currentStage} />
+        <ProgressBar currentStage={batch.currentStage ? parseInt(batch.currentStage, 10) : 0} />
       </div>
 
       {/* Details Sections */}
