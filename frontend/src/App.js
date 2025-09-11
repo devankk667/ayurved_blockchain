@@ -1,46 +1,150 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, Scan, CheckCircle, AlertTriangle, Leaf, MapPin, Calendar, Thermometer, Package, Truck, ShieldCheck } from 'lucide-react';
+import { BrowserRouter as Router, Routes, Route, useParams } from 'react-router-dom';
+import { 
+  Leaf, 
+  Package, 
+  Truck, 
+  ShieldCheck, 
+  CheckCircle, 
+  Scan, 
+  Camera, 
+  AlertTriangle,
+  MapPin,
+  Calendar,
+  Thermometer
+} from 'lucide-react';
+import './styles/global.css';
 
-const HerbTrackerApp = () => {
+const App = () => {
+  useEffect(() => {
+    // Add the Inter font to the document head
+    const link = document.createElement('link');
+    link.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap';
+    link.rel = 'stylesheet';
+    document.head.appendChild(link);
+    
+    return () => {
+      // Clean up the link when component unmounts
+      document.head.removeChild(link);
+    };
+  }, []);
+
+  return (
+    <Router>
+      <div className="min-h-screen bg-slate-900 text-white">
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/batch/:batchId" element={<DashboardWithParam />} />
+        </Routes>
+      </div>
+    </Router>
+  );
+};
+
+// Component to handle URL parameters
+const DashboardWithParam = () => {
+  const { batchId } = useParams();
+  return <Dashboard initialBatchId={batchId} />;
+};
+
+const Dashboard = ({ initialBatchId }) => {
   const [activeTab, setActiveTab] = useState('scan');
+  const [scanInput, setScanInput] = useState(initialBatchId || '');
   const [batchData, setBatchData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [scanInput, setScanInput] = useState('');
+
+  useEffect(() => {
+    if (initialBatchId) {
+      fetchBatchData(initialBatchId);
+    }
+  }, [initialBatchId]);
 
   const fetchBatchData = async (batchId) => {
     setLoading(true);
     setError('');
-    setBatchData(null);
     
     try {
-      const response = await fetch(`http://localhost:3001/api/batch/${batchId}`);
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      const data = await response.json();
-
-      // Convert timestamps to dates
-      if (data.batch) {
-        data.batch.plantingDate = new Date(data.batch.plantingDate * 1000);
-        data.batch.harvestDate = new Date(data.batch.harvestDate * 1000);
-      }
-      if (data.processing) {
-        data.processing.forEach(p => p.processDate = new Date(p.processDate * 1000));
-      }
-      if (data.distribution) {
-        data.distribution.forEach(d => {
-            d.shipDate = new Date(d.shipDate * 1000);
-            d.expectedDelivery = new Date(d.expectedDelivery * 1000);
-        });
-      }
-      if(data.qualityTests){
-        data.qualityTests.forEach(t => t.testDate = new Date(t.testDate * 1000));
-      }
-      if(data.iotData){
-        data.iotData.forEach(i => i.timestamp = new Date(i.timestamp * 1000));
-      }
-
+      // In a real app, this would be an API call
+      // For demo purposes, we'll simulate with mock data
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Mock data - in a real app this would come from the API
+      const data = {
+        batch: {
+          batchId: batchId,
+          herbName: "Ashwagandha",
+          herbVariety: "Withania somnifera",
+          currentStage: 2,
+          isOrganic: true,
+          farmLocation: "Nagpur, Maharashtra",
+          gpsCoordinates: "21.1458° N, 79.0882° E",
+          plantingDate: "2023-06-15",
+          harvestDate: "2023-12-20",
+          soilCondition: "Rich loamy soil",
+          quantity: 5000
+        },
+        processing: [
+          {
+            processMethod: "Sun Drying",
+            qualityGrade: "A+",
+            temperature: 32,
+            duration: 72,
+            outputQuantity: 2500,
+            processDate: "2023-12-22"
+          }
+        ],
+        distribution: [
+          {
+            trackingId: "TRK-ASH-2024-001",
+            shipDate: "2024-01-05",
+            expectedDelivery: "2024-01-15",
+            temperatureControlled: true,
+            transportConditions: "20-25°C, 60% humidity"
+          }
+        ],
+        qualityTests: [
+          {
+            testType: "Purity Test",
+            certificationId: "QC-ASH-2024-001",
+            testDate: "2023-12-25",
+            passed: true
+          },
+          {
+            testType: "Heavy Metal Screening",
+            certificationId: "QC-ASH-2024-002",
+            testDate: "2023-12-26",
+            passed: true
+          },
+          {
+            testType: "Microbial Analysis",
+            certificationId: "QC-ASH-2024-003",
+            testDate: "2023-12-27",
+            passed: true
+          }
+        ],
+        iotData: [
+          {
+            sensorType: "Temperature",
+            value: 22.5,
+            unit: "°C",
+            timestamp: "2024-01-10T10:30:00Z"
+          },
+          {
+            sensorType: "Humidity",
+            value: 58,
+            unit: "%",
+            timestamp: "2024-01-10T10:30:00Z"
+          },
+          {
+            sensorType: "Light Exposure",
+            value: 120,
+            unit: "lux",
+            timestamp: "2024-01-10T10:30:00Z"
+          }
+        ]
+      };
+      
       setBatchData(data);
       setActiveTab('results');
     } catch (err) {
@@ -109,7 +213,6 @@ const HerbTrackerApp = () => {
         <h2 className="text-2xl font-bold text-gray-800 mb-2">Verify Your Herbs</h2>
         <p className="text-gray-600">Scan QR code or enter Batch ID to verify authenticity</p>
       </div>
-
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Batch ID</label>
@@ -139,17 +242,14 @@ const HerbTrackerApp = () => {
             </>
           )}
         </button>
-
         <div className="text-center">
           <span className="text-gray-500">or</span>
         </div>
-
         <button className="w-full bg-gray-100 text-gray-700 py-3 px-6 rounded-lg font-semibold hover:bg-gray-200 transition-colors duration-200">
           <Camera className="inline w-5 h-5 mr-2" />
           Scan QR Code
         </button>
       </div>
-
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center">
           <AlertTriangle className="w-5 h-5 text-red-500 mr-3" />
@@ -171,10 +271,10 @@ const HerbTrackerApp = () => {
         </div>
       );
     }
-
+    
     const { batch, processing, distribution, qualityTests, iotData } = batchData;
     const stageInfo = getStageInfo(batch.currentStage);
-
+    
     return (
       <div className="p-6 space-y-6">
         {/* Header */}
@@ -200,11 +300,11 @@ const HerbTrackerApp = () => {
               </span>
             )}
           </div>
-
+          
           {/* Progress Bar */}
           <ProgressBar currentStage={batch.currentStage} />
         </div>
-
+        
         {/* Farm Details */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
@@ -232,7 +332,7 @@ const HerbTrackerApp = () => {
             </div>
             <div>
               <p className="text-sm text-gray-600">Harvested</p>
-              <p className="font-semibold flex.items-center">
+              <p className="font-semibold flex items-center">
                 <Calendar className="w-4 h-4 text-gray-400 mr-1" />
                 {formatDate(batch.harvestDate)}
               </p>
@@ -247,7 +347,7 @@ const HerbTrackerApp = () => {
             </div>
           </div>
         </div>
-
+        
         {/* Processing Details */}
         {processing.length > 0 && (
           <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -290,7 +390,7 @@ const HerbTrackerApp = () => {
             ))}
           </div>
         )}
-
+        
         {/* Distribution Details */}
         {distribution.length > 0 && (
           <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -328,11 +428,11 @@ const HerbTrackerApp = () => {
             ))}
           </div>
         )}
-
+        
         {/* Quality Tests */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-            <ShieldCheck className="w-5 h-5 text-purple-600 mr-2" />
+          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center="w-5 h-">
+            <ShieldCheck className5 text-purple-600 mr-2" />
             Quality Certifications
           </h3>
           <div className="space-y-4">
@@ -358,7 +458,7 @@ const HerbTrackerApp = () => {
             ))}
           </div>
         </div>
-
+        
         {/* IoT Sensor Data */}
         {iotData.length > 0 && (
           <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -386,60 +486,33 @@ const HerbTrackerApp = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-md mx-auto px-4 py-4">
-          <div className="flex items-center justify-center">
-            <div className="flex items-center">
-              <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-blue-500 rounded-lg flex items-center justify-center mr-3">
-                <Leaf className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-800">AyurChain</h1>
-                <p className="text-sm text-gray-600">Herb Authenticity Tracker</p>
-              </div>
-            </div>
-          </div>
-        </div>
+    <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden my-8">
+      <div className="flex border-b border-gray-200">
+        <button
+          className={`flex-1 py-4 px-6 text-center font-medium ${
+            activeTab === 'scan' 
+              ? 'text-green-600 border-b-2 border-green-600' 
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+          onClick={() => setActiveTab('scan')}
+        >
+          Scan Herb
+        </button>
+        <button
+          className={`flex-1 py-4 px-6 text-center font-medium ${
+            activeTab === 'results' 
+              ? 'text-green-600 border-b-2 border-green-600' 
+              : 'text-gray-500 hover:text-gray-700'
+          }`}
+          onClick={() => setActiveTab('results')}
+        >
+          Results
+        </button>
       </div>
-
-      {/* Tab Navigation */}
-      <div className="max-w-md mx-auto bg-white">
-        <div className="flex">
-          <button
-            onClick={() => setActiveTab('scan')}
-            className={`flex-1 py-3 px-4 text-center font-medium ${
-              activeTab === 'scan'
-                ? 'text-green-600 border-b-2 border-green-600 bg-green-50'
-                : 'text-gray-600 hover:text-gray-800'
-            }`}
-          >
-            <Scan className="w-5 h-5 mx-auto mb-1" />
-            Scan
-          </button>
-          <button
-            onClick={() => {
-                if(batchData) setActiveTab('results')
-            }}
-            className={`flex-1 py-3 px-4 text-center font-medium ${
-              activeTab === 'results'
-                ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
-                : 'text-gray-600 hover:text-gray-800'
-            }`}
-          >
-            <ShieldCheck className="w-5 h-5 mx-auto mb-1" />
-            Results
-          </button>
-        </div>
-      </div>
-
-      {/* Tab Content */}
-      <div className="max-w-md mx-auto bg-white min-h-screen">
-        {activeTab === 'scan' ? <ScanTab /> : <ResultsTab />}
-      </div>
+      
+      {activeTab === 'scan' ? <ScanTab /> : <ResultsTab />}
     </div>
   );
 };
 
-export default HerbTrackerApp;
+export default App;
