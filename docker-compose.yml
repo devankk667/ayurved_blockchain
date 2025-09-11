@@ -1,28 +1,23 @@
 version: '3.8'
 
 services:
-  ganache:
-    image: trufflesuite/ganache-cli:latest
-    ports:
-      - "7545:7545"
-    command: "ganache-cli -h 0.0.0.0"
-
-  backend:
-    build: ./backend
-    ports:
-      - "3001:3001"
-    depends_on:
-      - ganache
-    volumes:
-      - ./backend:/usr/src/app
-      - /usr/src/app/node_modules
-
   frontend:
-    build: ./frontend
+    build:
+      context: ./herb-tracker-frontend
     ports:
-      - "80:80"
+      - "8080:80"
     depends_on:
       - backend
-    volumes:
-      - ./frontend:/usr/src/app
-      - /usr/src/app/node_modules
+
+  backend:
+    build:
+      context: ./herb-tracker-backend
+    ports:
+      - "3001:3001"
+    environment:
+      # Use host.docker.internal to connect to the Hardhat node running on the host
+      RPC_URL: http://host.docker.internal:8545
+    # 'host.docker.internal' is added to the container's /etc/hosts file
+    # This is required for Docker on Linux
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
